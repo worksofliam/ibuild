@@ -1,7 +1,7 @@
 {
   "name": "My project",
-  "envVars": [],
-  "library": "CMPSYS",
+  "envVars": ["BUILDLIB"],
+  "library": "&BUILDLIB",
   "libraryList": ["CMPSYS", "SAMPLE"],
   "execution": {
      "rpgle": "CRTBNDRPG PGM(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') DBGVIEW(&DBGVIEW)",

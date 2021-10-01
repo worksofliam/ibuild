@@ -14,8 +14,6 @@ switch (action) {
     let arguments = {
       all: false,
       onlyPrint: false,
-      silent: false,
-      ignoreErrors: false,
       spool: false,
     }
     let specificFiles = [];

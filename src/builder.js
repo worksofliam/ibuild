@@ -7,7 +7,7 @@ var glob = require(`glob`);
 
 module.exports = class builder {
   /**
-   * @param {{all: boolean, onlyPrint: boolean, silent: boolean, ignoreErrors: false, spool: false}} options 
+   * @param {{all: boolean, onlyPrint: boolean, spool: false}} options 
    */
   constructor(options) {
     this.options = options;
@@ -73,7 +73,9 @@ module.exports = class builder {
       this.config.libraryList = this.config.libraryList.map(lib => this.convertVariables(lib));
     }
 
-    if (this.config.currentLibrary === undefined) {
+    if (typeof this.config.currentLibrary === `string`) {
+      this.config.currentLibrary = this.convertVariables(this.config.currentLibrary);
+    } else {
       this.config.currentLibrary = `QGPL`;
     }
 
@@ -249,11 +251,11 @@ module.exports = class builder {
       this.build[filePath] = stat.mtimeMs;
       this.rebuilt.push(filePath);
 
+      console.log(``);
+
     } else {
       // log(`${filePath} is up to date`);
     }
-
-    console.log(``);
 
     return requiresBuild;
   }
