@@ -12,11 +12,12 @@ module.exports = class builder {
   constructor(options) {
     this.options = options;
 
-    /** @type {{envVars?: string[], library: string, currentLibrary?: string, libraryList: string[], execution: {[extension: string]: string}}} */
+    /** @type {{envVars?: string[], library: string, currentLibrary?: string, libraryList: string[], ifsCCSID?: number, execution: {[extension: string]: string}}} */
     this.config = {};
 
     /** @type {{[dirPath: string]: {
      * sources: {[file: string]: {requires?: string[], currentLibrary?: string, execution?: string, text?: string}},
+     * sourceFileCCSID?: string,
      * overrides?: {library?: string, currentLibrary?: string, libraryList?: string[]}
      * }}} */
     this.configs = {};
@@ -178,7 +179,7 @@ module.exports = class builder {
     const stat = await fs.stat(filePath);
 
     if (this.build[filePath] !== stat.mtimeMs || requiresBuild) {
-      let library, libraryList, currentLibrary, execution, text = ``;
+      let library, libraryList, currentLibrary, execution, text = ``, sourceFileCCSID;
 
       // First, we get the default values
       library = this.config.library;
@@ -195,23 +196,27 @@ module.exports = class builder {
 
       // Then, we override with the config file specific dir config
       if (dirConfig) {
+        if (dirConfig.sourceFileCCSID) {
+          sourceFileCCSID = this.convertVariables(dirConfig.sourceFileCCSID);
+        }
+
         // Generic override for entire folder
         if (dirConfig.overrides) {
           if (dirConfig.overrides.library)
-            library = dirConfig.overrides.library;
+            library = this.convertVariables(dirConfig.overrides.library);
 
           if (dirConfig.overrides.libraryList)
-            libraryList = dirConfig.overrides.libraryList;
+            libraryList = this.convertVariables(dirConfig.overrides.libraryList);
 
           if (dirConfig.overrides.currentLibrary)
-            currentLibrary = dirConfig.overrides.currentLibrary;
+            currentLibrary = this.convertVariables(dirConfig.overrides.currentLibrary);
         }
         
         // Override for specific file
         if (dirConfig.sources && dirConfig.sources[pathInfo.base]) {
           const currentDep = dirConfig.sources[pathInfo.base];
           if (currentDep.currentLibrary)
-            currentLibrary = currentDep.currentLibrary;
+            currentLibrary = this.convertVariables(currentDep.currentLibrary);
 
           if (currentDep.execution)
             execution = currentDep.execution;
@@ -235,8 +240,6 @@ module.exports = class builder {
         error(`Name for ${filePath} is too long (in ${pathInfo.dir}).`);
       }
 
-      // TODO: build
-
       await this.execute({
         libraryList,
         currentLibrary,
@@ -245,6 +248,7 @@ module.exports = class builder {
         name,
         path: filePath,
         execution,
+        sourceFileCCSID,
         text
       })
 
@@ -261,7 +265,16 @@ module.exports = class builder {
   }
 
   /**
-   * @param {{libraryList: string[], currentLibrary: string, library: string, folder: string, name: string, path: string, execution: string, text?: string}} args 
+   * @param {{
+   *   libraryList: string[], 
+   *   currentLibrary: string, 
+   *   library: string, 
+   *   folder: string, 
+   *   name: string, 
+   *   path: string, 
+   *   execution: string,
+   *   sourceFileCCSID?: string,
+   *   text?: string}} args 
    */
   async execute(args) {
     let libl = args.libraryList.slice(0).reverse();
@@ -281,8 +294,12 @@ module.exports = class builder {
 
     if (this.options.onlyPrint === false) {
       if (args.execution.includes(`SRCFILE`)) {
-        await this.createSourcefile(args.library, args.folder);
+        await this.createSourcefile(args.library, args.folder, args.sourceFileCCSID || `*JOB`);
         await this.copyToMember(args.path, args.library, args.folder, args.name);
+      } else {
+        if (this.config.ifsCCSID) {
+          await execSync(`/usr/bin/setccsid ${this.config.ifsCCSID} ${args.path}`);
+        }
       }
 
       const command = `system ${this.options.spool ? `` : `-s`} "${realCommand}"`;
@@ -341,11 +358,11 @@ module.exports = class builder {
     }
   }
 
-  async createSourcefile(library, file) {
+  async createSourcefile(library, file, ccsid) {
     const objPath = `${library.toUpperCase()}/${file.toUpperCase()}`;
 
     if (!this.builtSourceFiles.includes(objPath)) { 
-      const ileCommand = `CRTSRCPF FILE(${objPath}) RCDLEN(112)`;
+      const ileCommand = `CRTSRCPF FILE(${objPath}) RCDLEN(112) CCSID(${ccsid})`;
       const command = `system -s "${ileCommand}"`;
 
       try {
