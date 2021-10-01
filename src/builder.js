@@ -32,6 +32,9 @@ module.exports = class builder {
 
     /** @type {{[filePath: string]: string[]}} */
     this.deps = {}
+
+    /** @type {string[]} */
+    this.builtSourceFiles = [];
   }
 
   /**
@@ -70,6 +73,10 @@ module.exports = class builder {
       this.config.libraryList = this.config.libraryList.map(lib => this.convertVariables(lib));
     }
 
+    if (this.config.currentLibrary === undefined) {
+      this.config.currentLibrary = `QGPL`;
+    }
+
     // Start working
 
     const allFiles = glob.sync(path.join(`.`, `**`, `*.+(${validTypes.join(`|`)})`));
@@ -86,7 +93,11 @@ module.exports = class builder {
     await this.resolveDeps(startSources);
     await this.cleanup(startSources);
 
-    if (this.options.onlyPrint === false) await this.getDefaultLibraryList();
+    if (this.options.onlyPrint === false) {
+      await this.getDefaultLibraryList();
+      debug(`Default library list: ${this.defaultLibraryList.join(` `)}`);
+      debug(`Default current library: ${this.config.currentLibrary}`);
+    }
     
     await this.startBuild();
   }
@@ -242,6 +253,8 @@ module.exports = class builder {
       // log(`${filePath} is up to date`);
     }
 
+    console.log(``);
+
     return requiresBuild;
   }
 
@@ -250,6 +263,10 @@ module.exports = class builder {
    */
   async execute(args) {
     // TODO: if source is not SRCSTMF... move to member in library
+    if (args.execution.includes(`SRCFILE`)) {
+      await this.createSourcefile(args.library, args.folder);
+      await this.copyToMember(args.path, args.library, args.folder, args.name);
+    }
 
     let libl = args.libraryList.slice(0).reverse();
 
@@ -258,16 +275,16 @@ module.exports = class builder {
     const realCommand = this.convertVariables(args.execution, {
       currentLibrary: args.currentLibrary,
       library: args.library,
+      parent: args.folder,
       name: args.name,
-      folder: args.folder,
       srcstmf: args.path,
       text: args.text || ``,
-    })
+    });
 
     log(`$ ${realCommand}`);
 
     if (this.options.onlyPrint === false) {
-      const command = `system ${this.options.spool ? `` : `-s`} ${realCommand}`;
+      const command = `system ${this.options.spool ? `` : `-s`} "${realCommand}"`;
 
       const commandResult = await this.qsh([
         `liblist -d ` + this.defaultLibraryList.join(` `),
@@ -314,9 +331,50 @@ module.exports = class builder {
     command = `echo "` + command + `" | /QOpenSys/usr/bin/qsh`;
 
     debug(command);
-    const result = execSync(command);
+    try {
+      const result = execSync(command);
 
-    return result.toString().trim();
+      return result.toString().trim();
+    } catch (e) {
+      error(e);
+    }
+  }
+
+  async createSourcefile(library, file) {
+    const objPath = `${library.toUpperCase()}/${file.toUpperCase()}`;
+
+    if (!this.builtSourceFiles.includes(objPath)) { 
+      const ileCommand = `CRTSRCPF FILE(${objPath}) RCDLEN(112)`;
+      const command = `system -s "${ileCommand}"`;
+
+      try {
+        execSync(command);
+
+        debug(`Created sourcefile objPath`);
+        this.builtSourceFiles.push(objPath);
+      } catch (e) {
+        debug(e);
+        debug(`Failed to create source file`);
+      }
+    }
+  }
+
+  async copyToMember(ifsPath, lib, file, member) {
+    lib = lib.toUpperCase();
+    file = file.toUpperCase();
+    member = member.toUpperCase();
+
+    const ileCommand = `QSYS/CPYFRMSTMF FROMSTMF('${ifsPath}') TOMBR('/QSYS.lib/${lib}.LIB/${file}.FILE/${member}.MBR') MBROPT(*REPLACE) STMFCCSID(1208) DBFCCSID(*FILE)`;
+    const command = `system -s "${ileCommand}"`;
+
+    try {
+      execSync(command);
+
+      debug(`Copied ${ifsPath} to ${lib}/${file}/${member}`);
+    } catch (e) {
+      debug(e);
+      error(`Failed to copy source file`);
+    }
   }
   
   /**
@@ -419,6 +477,6 @@ function log(string) {
 }
 
 function error(string) {
-  console.warn(`\x1b[31m[WARNING]\x1b[0m ${string}`);
+  console.warn(`\x1b[31m[ERROR]\x1b[0m ${string}`);
   process.exit(1);
 }

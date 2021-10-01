@@ -15,7 +15,8 @@ switch (action) {
       all: false,
       onlyPrint: false,
       silent: false,
-      ignoreErrors: false
+      ignoreErrors: false,
+      spool: false,
     }
     let specificFiles = [];
 
@@ -29,6 +30,10 @@ switch (action) {
 
           case `--onlyprint`:
             arguments.onlyPrint = true;
+            break;
+
+          case `--spool`:
+            arguments.spool = true;
             break;
         }
 
