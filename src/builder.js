@@ -171,7 +171,7 @@ module.exports = class builder {
     const pathInfo = path.parse(filePath);
     const name = pathInfo.name;
     const ext = pathInfo.ext.substr(1).toLowerCase();
-    const dirConfig = this.configs[pathInfo.dir];
+    const dirConfig = this.configs[path.join(pathInfo.dir, `config.json`)];
 
     const stat = await fs.stat(filePath);
 
@@ -262,12 +262,6 @@ module.exports = class builder {
    * @param {{libraryList: string[], currentLibrary: string, library: string, folder: string, name: string, path: string, execution: string, text?: string}} args 
    */
   async execute(args) {
-    // TODO: if source is not SRCSTMF... move to member in library
-    if (args.execution.includes(`SRCFILE`)) {
-      await this.createSourcefile(args.library, args.folder);
-      await this.copyToMember(args.path, args.library, args.folder, args.name);
-    }
-
     let libl = args.libraryList.slice(0).reverse();
 
     libl = libl.map(lib => this.convertVariables(lib));
@@ -284,6 +278,11 @@ module.exports = class builder {
     log(`$ ${realCommand}`);
 
     if (this.options.onlyPrint === false) {
+      if (args.execution.includes(`SRCFILE`)) {
+        await this.createSourcefile(args.library, args.folder);
+        await this.copyToMember(args.path, args.library, args.folder, args.name);
+      }
+
       const command = `system ${this.options.spool ? `` : `-s`} "${realCommand}"`;
 
       const commandResult = await this.qsh([
