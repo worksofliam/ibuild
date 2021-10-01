@@ -7,7 +7,7 @@ var glob = require(`glob`);
 
 module.exports = class builder {
   /**
-   * @param {{all: boolean, onlyPrint: boolean, spool: false}} options 
+   * @param {{force: boolean, onlyPrint: boolean, spool: false}} options 
    */
   constructor(options) {
     this.options = options;
@@ -120,7 +120,7 @@ module.exports = class builder {
   async startBuild() {
     const buildDataPath = path.join(process.cwd(), `test`, `build.json`);
 
-    if (this.options.all === false) {
+    if (this.options.force === false) {
       const prevBuild = await getConfig(buildDataPath);
       this.build = prevBuild || {};
     }

@@ -14,7 +14,7 @@ switch (action) {
 
   case `build`:
     let arguments = {
-      all: false,
+      force: false,
       onlyPrint: false,
       spool: false,
     }
@@ -24,8 +24,8 @@ switch (action) {
       if (args[i].startsWith(`-`)) {
         //Specific argument
         switch (args[i]) {
-          case `--all`:
-            arguments.all = true;
+          case `--force`:
+            arguments.force = true;
             break;
 
           case `--onlyprint`:
