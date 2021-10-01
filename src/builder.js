@@ -16,7 +16,8 @@ module.exports = class builder {
     this.config = {};
 
     /** @type {{[dirPath: string]: {
-     * sources: {[file: string]: {requires?: string[], currentLibrary?: string, execution?: string, text?: string}},
+     * headers?: boolean
+     * sources: {[file: string]: {requires?: string[], currentLibrary?: string, execution?: string, text?: string, header?: boolean}},
      * sourceFileCCSID?: string,
      * overrides?: {library?: string, currentLibrary?: string, libraryList?: string[]}
      * }}} */
@@ -179,7 +180,7 @@ module.exports = class builder {
     const stat = await fs.stat(filePath);
 
     if (this.build[filePath] !== stat.mtimeMs || requiresBuild) {
-      let library, libraryList, currentLibrary, execution, text = ``, sourceFileCCSID;
+      let library, libraryList, currentLibrary, execution, text = ``, sourceFileCCSID, header = false;
 
       // First, we get the default values
       library = this.config.library;
@@ -196,6 +197,10 @@ module.exports = class builder {
 
       // Then, we override with the config file specific dir config
       if (dirConfig) {
+        if (dirConfig.headers) {
+          header = true;
+        }
+
         if (dirConfig.sourceFileCCSID) {
           sourceFileCCSID = this.convertVariables(dirConfig.sourceFileCCSID);
         }
@@ -223,39 +228,45 @@ module.exports = class builder {
 
           if (currentDep.text)
             text = currentDep.text;
+
+          if (currentDep.header)
+            header = true;
         }
       }
 
-      // Cleanup the text
+      // We don't need to build headers
+      if (header === false) {  
+        // Cleanup the text
 
-      if (text.length > 50) {
-        text = text.substr(0, 50);
-        log(`Text for ${filePath} is too long (in ${pathInfo.dir}). Automatically trimmed`);
+        if (text.length > 50) {
+          text = text.substr(0, 50);
+          log(`Text for ${filePath} is too long (in ${pathInfo.dir}). Automatically trimmed`);
+        }
+        text = text.replace(/'/g, `''`);
+
+        // Make sure the name is valid
+
+        if (name.length > 10) {
+          error(`Name for ${filePath} is too long (in ${pathInfo.dir}).`);
+        }
+
+        await this.execute({
+          libraryList,
+          currentLibrary,
+          library,
+          folder: path.basename(pathInfo.dir),
+          name,
+          path: filePath,
+          execution,
+          sourceFileCCSID,
+          text
+        });
+
+        console.log(``);
       }
-      text = text.replace(/'/g, `''`);
-
-      // Make sure the name is valid
-
-      if (name.length > 10) {
-        error(`Name for ${filePath} is too long (in ${pathInfo.dir}).`);
-      }
-
-      await this.execute({
-        libraryList,
-        currentLibrary,
-        library,
-        folder: path.basename(pathInfo.dir),
-        name,
-        path: filePath,
-        execution,
-        sourceFileCCSID,
-        text
-      })
 
       this.build[filePath] = stat.mtimeMs;
       this.rebuilt.push(filePath);
-
-      console.log(``);
 
     } else {
       // log(`${filePath} is up to date`);

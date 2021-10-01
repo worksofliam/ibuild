@@ -1,14 +1,14 @@
 {
   "sources": {
-    "depts.pgm": {
-      "requires": ["depts.sqlrpgle"]
-    },
     "depts.sqlrpgle": { 
-      "requires": ["depts.dspf", "employees.sqlrpgle"],
+      "requires": ["depts.dspf", "employees.sqlrpgle", "constants.rpgle"],
       "execution": "CRTSQLRPGI OBJTYPE(*MODULE) OBJ(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') COMMIT(*NONE)"
     },
     "employees.sqlrpgle": {
-      "requires": ["emps.dspf"]
+      "requires": ["emps.dspf", "constants.rpgle"]
+    },
+    "depts.pgm": {
+      "requires": ["depts.sqlrpgle"]
     }
   }
 }
