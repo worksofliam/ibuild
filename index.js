@@ -1,4 +1,5 @@
 const builder = require('./src/builder');
+const init = require('./src/init');
 
 const args = process.argv.slice(2);
 
@@ -8,6 +9,7 @@ let considerNulls = true;
 
 switch (action) {
   case `init`:
+    init.init()
     break;
 
   case `build`:
