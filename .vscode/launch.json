@@ -15,7 +15,7 @@
         "DEBUG": "true"
       },
       "program": "./index.js",
-      "args": ["build"],
+      "args": ["build", "--onlyprint"],
     }
   ]
 }

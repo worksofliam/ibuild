@@ -22,6 +22,15 @@ switch (action) {
     for (let i = 1; i < args.length; i++) {
       if (args[i].startsWith(`-`)) {
         //Specific argument
+        switch (args[i]) {
+          case `--all`:
+            arguments.all = true;
+            break;
+
+          case `--onlyprint`:
+            arguments.onlyPrint = true;
+            break;
+        }
 
       } else {
         specificFiles.push(args[i]);

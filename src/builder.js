@@ -60,10 +60,14 @@ module.exports = class builder {
 
     if (typeof this.config.library !== `string`) {
       error(`Library property in project.json must be a string`);
+    } else {
+      this.config.library = this.convertVariables(this.config.library);
     }
 
     if (this.config.libraryList === undefined) {
       error(`Library list requires items.`);
+    } else {
+      this.config.libraryList = this.config.libraryList.map(lib => this.convertVariables(lib));
     }
 
     // Start working
@@ -220,7 +224,16 @@ module.exports = class builder {
 
       // TODO: build
 
-      log(`${library}/${name}.${ext}`);
+      await this.execute({
+        libraryList,
+        currentLibrary,
+        library,
+        folder: path.basename(pathInfo.dir),
+        name,
+        path: filePath,
+        execution,
+        text
+      })
 
       this.build[filePath] = stat.mtimeMs;
       this.rebuilt.push(filePath);
@@ -233,21 +246,32 @@ module.exports = class builder {
   }
 
   /**
-   * @param {{libraryList: string[], currentLibrary: string, library: string, name: string, execution: string, text?: string}} args 
+   * @param {{libraryList: string[], currentLibrary: string, library: string, folder: string, name: string, path: string, execution: string, text?: string}} args 
    */
   async execute(args) {
+    // TODO: if source is not SRCSTMF... move to member in library
+
     let libl = args.libraryList.slice(0).reverse();
 
-    // TODO: variables?
+    libl = libl.map(lib => this.convertVariables(lib));
 
-    log(`$ ${args.execution}`);
+    const realCommand = this.convertVariables(args.execution, {
+      currentLibrary: args.currentLibrary,
+      library: args.library,
+      name: args.name,
+      folder: args.folder,
+      srcstmf: args.path,
+      text: args.text || ``,
+    })
+
+    log(`$ ${realCommand}`);
 
     if (this.options.onlyPrint === false) {
-      const command = `system ${this.options.spool ? `` : `-s`} ${args.execution}`;
+      const command = `system ${this.options.spool ? `` : `-s`} ${realCommand}`;
 
       const commandResult = await this.qsh([
         `liblist -d ` + this.defaultLibraryList.join(` `),
-        `liblist -c ` + this.config.currentLibrary,
+        `liblist -c ` + args.currentLibrary,
         `liblist -a ` + libl.join(` `),
         command,
       ]);
@@ -351,6 +375,23 @@ module.exports = class builder {
         }
       }
     }
+  }
+
+  /**
+   * @param {string} string 
+   * @param {{[name: string]: string}} [customVariables]
+   */
+  convertVariables(string, customVariables) {
+    const variables = {
+      ...customVariables,
+      ...process.env
+    };
+
+    for (const [name, value] of Object.entries(variables)) {
+      string = string.replace(new RegExp(`&${name.toUpperCase()}`, `g`), value);
+    }
+
+    return string;
   }
 }
 
