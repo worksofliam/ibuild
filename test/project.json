@@ -1,0 +1,12 @@
+{
+  "name": "My project",
+  "envVars": [],
+  "library": "PROJ_&ENV",
+  "libraryList": ["PROJ_&ENV", "&DATA_TABLE"],
+  "execution": {
+     "rpgle": "CRTBNDRPG PGM(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') DBGVIEW(&DBGVIEW)",
+     "sqlrpgle": "CRTSQLRPGI OBJ(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') COMMIT(*NONE) DBGVIEW(*NONE)",
+     "dspf": "CRTDSPF ...",
+     "pgm": "CRTPGM PGM(&LIBRARY/&NAME) ENTMOD(*PGM)"
+  }
+}
