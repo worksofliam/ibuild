@@ -283,25 +283,38 @@ module.exports = class builder {
    *   folder: string, 
    *   name: string, 
    *   path: string, 
-   *   execution: string,
+   *   execution: string|string[],
    *   sourceFileCCSID?: string,
    *   text?: string}} args 
    */
   async execute(args) {
-    let libl = args.libraryList.slice(0).reverse();
+    const extension = path.parse(args.path).ext.substr(1).toLowerCase();
+    let commands = [];
 
-    libl = libl.map(lib => this.convertVariables(lib));
+    if (typeof args.execution === `string`)
+      commands = [args.execution];
+    else
+      commands = args.execution;
 
-    const realCommand = this.convertVariables(args.execution, {
+    switch (extension) {
+      case `bnddir`:
+        break;
+      default:
+        break;
+    }
+
+    commands = commands.map(command => this.convertVariables(command, {
       currentLibrary: args.currentLibrary,
       library: args.library,
       parent: args.folder,
       name: args.name,
       srcstmf: args.path,
       text: args.text || ``,
-    });
+    }));
 
-    log(`$ ${realCommand}`);
+    commands.forEach(command => {
+      log(command);
+    });
 
     if (this.options.onlyPrint === false) {
       if (args.execution.includes(`SRCFILE`)) {
@@ -313,13 +326,16 @@ module.exports = class builder {
         }
       }
 
-      const command = `system ${this.options.spool ? `` : `-s`} "${realCommand}"`;
+      commands = commands.map(command => `system ${this.options.spool ? `` : `-s`} "${command}"`);
+
+      let libl = args.libraryList.slice(0).reverse();
+      libl = libl.map(lib => this.convertVariables(lib));
 
       const commandResult = await this.qsh([
         `liblist -d ` + this.defaultLibraryList.join(` `),
         `liblist -c ` + args.currentLibrary,
         `liblist -a ` + libl.join(` `),
-        command,
+        ...command,
       ]);
     }
   }
@@ -480,6 +496,11 @@ module.exports = class builder {
 
     return string;
   }
+
+  static error(string) {
+    console.warn(`\x1b[31m[ERROR]\x1b[0m ${string}`);
+    process.exit(1);
+  }
 }
 
 async function getConfig(jsonPath) {
@@ -503,9 +524,4 @@ function debug(string) {
 
 function log(string) {
   console.log(`[LOG] ${string}`);
-}
-
-function error(string) {
-  console.warn(`\x1b[31m[ERROR]\x1b[0m ${string}`);
-  process.exit(1);
 }

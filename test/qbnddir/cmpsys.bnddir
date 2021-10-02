@@ -1,0 +1,11 @@
+{
+  "clear": false,
+  "entries": [
+    {
+      "library": "*LIBL",
+      "name": "MYSRVPGM",
+      "type": "*SRVPGM",
+      "activation": "*IMMED"
+    }
+  ]
+}
