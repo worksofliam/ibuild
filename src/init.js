@@ -15,7 +15,8 @@ module.exports = class init {
          "dspf": "CRTDSPF FILE(&LIBRARY/&NAME) SRCFILE(&LIBRARY/&PARENT) SRCMBR(&NAME)",
          "pgm": "CRTPGM PGM(&LIBRARY/&NAME) ENTMOD(*PGM)",
          "clle": "CRTBNDCL PGM(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') DBGVIEW(*NONE)",
-         "cmd": "CRTCMD CMD(&LIBRARY/&NAME) PGM(&LIBRARY/&NAME) SRCSTMF('&FULLPATH')"
+         "cmd": "CRTCMD CMD(&LIBRARY/&NAME) PGM(&LIBRARY/&NAME) SRCSTMF('&FULLPATH')",
+         "bnddir": "# Handled by the build"
       }
     }
 

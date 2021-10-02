@@ -3,7 +3,10 @@ const fs = require(`fs/promises`);
 const { execSync } = require('child_process');
 
 const path = require(`path`);
-var glob = require(`glob`);
+const glob = require(`glob`);
+
+const General = require(`./general`);
+const BindingDirectory = require(`./psudo/bindingDirectory`);
 
 module.exports = class builder {
   /**
@@ -43,7 +46,7 @@ module.exports = class builder {
    * @param {string[]} files List of files to build. If empty, build all
    */
   async run(files) {
-    this.config = await getConfig(path.join(process.cwd(), `test`, `project.json`));
+    this.config = await General.getConfig(path.join(process.cwd(), `test`, `project.json`));
 
     let validTypes = [];
     
@@ -52,25 +55,25 @@ module.exports = class builder {
     if (this.config.execution) {
       validTypes = Object.keys(this.config.execution);
     } else {
-      error(`No execution object found in project.json`);
+      builder.error(`No execution object found in project.json`);
     }
 
     if (this.config.envVars && this.config.envVars.length > 0) {
       for (const envVar of this.config.envVars) {
         if (process.env[envVar.toUpperCase()] === undefined) {
-          error(`Environment variable '${envVar}' is required but not found.`);
+          builder.error(`Environment variable '${envVar}' is required but not found.`);
         }
       }
     }
 
     if (typeof this.config.library !== `string`) {
-      error(`Library property in project.json must be a string`);
+      builder.error(`Library property in project.json must be a string`);
     } else {
       this.config.library = this.convertVariables(this.config.library);
     }
 
     if (this.config.libraryList === undefined) {
-      error(`Library list requires items.`);
+      builder.error(`Library list requires items.`);
     } else {
       this.config.libraryList = this.config.libraryList.map(lib => this.convertVariables(lib));
     }
@@ -86,21 +89,26 @@ module.exports = class builder {
     const allFiles = glob.sync(path.join(`.`, `**`, `*.+(${validTypes.join(`|`)})`));
     let startSources = [];
 
+    let cleanup = false;
+
     if (files.length > 0) {
       for (const source of files) {
         startSources.push(...glob.sync(`./**/${source}`));
       }
     } else {
       startSources = allFiles;
+      cleanup = true;
     }
 
     await this.resolveDeps(startSources);
-    await this.cleanup(startSources);
+
+    if (cleanup)
+      await this.cleanup(startSources);
 
     if (this.options.onlyPrint === false) {
       await this.getDefaultLibraryList();
-      debug(`Default library list: ${this.defaultLibraryList.join(` `)}`);
-      debug(`Default current library: ${this.config.currentLibrary}`);
+      General.debug(`Default library list: ${this.defaultLibraryList.join(` `)}`);
+      General.debug(`Default current library: ${this.config.currentLibrary}`);
     }
     
     await this.startBuild();
@@ -123,7 +131,7 @@ module.exports = class builder {
     const buildDataPath = path.join(process.cwd(), `test`, `build.json`);
 
     if (this.options.force === false) {
-      const prevBuild = await getConfig(buildDataPath);
+      const prevBuild = await General.getConfig(buildDataPath);
       this.build = prevBuild || {};
     }
 
@@ -132,7 +140,7 @@ module.exports = class builder {
       await this.buildDep(dep);
     }
 
-    await writeContent(buildDataPath, JSON.stringify(this.build, null, 2));
+    await General.writeContent(buildDataPath, JSON.stringify(this.build, null, 2));
   }
   
   /**
@@ -192,7 +200,7 @@ module.exports = class builder {
 
       // TODO: handle bnddir and msgf
       if (execution === undefined) {
-        error(`No execution command found for ${ext}`);
+        builder.error(`No execution command found for ${ext}`);
       }
 
       // Then, we override with the config file specific dir config
@@ -240,14 +248,14 @@ module.exports = class builder {
 
         if (text.length > 50) {
           text = text.substr(0, 50);
-          log(`Text for ${filePath} is too long (in ${pathInfo.dir}). Automatically trimmed`);
+          General.log(`Text for ${filePath} is too long (in ${pathInfo.dir}). Automatically trimmed`);
         }
         text = text.replace(/'/g, `''`);
 
         // Make sure the name is valid
 
         if (name.length > 10) {
-          error(`Name for ${filePath} is too long (in ${pathInfo.dir}).`);
+          builder.error(`Name for ${filePath} is too long (in ${pathInfo.dir}).`);
         }
 
         await this.execute({
@@ -298,6 +306,7 @@ module.exports = class builder {
 
     switch (extension) {
       case `bnddir`:
+        commands = await BindingDirectory.transform(args.path);
         break;
       default:
         break;
@@ -313,7 +322,7 @@ module.exports = class builder {
     }));
 
     commands.forEach(command => {
-      log(command);
+      General.log(command);
     });
 
     if (this.options.onlyPrint === false) {
@@ -326,7 +335,13 @@ module.exports = class builder {
         }
       }
 
-      commands = commands.map(command => `system ${this.options.spool ? `` : `-s`} "${command}"`);
+      commands = commands.map(command => {
+        let ignoreError = false;
+        if (command.startsWith(`!`)) ignoreError = true;
+        if (ignoreError) command = command.substr(1);
+
+        return `system ${this.options.spool ? `` : `-s`} ${ignoreError ? `-q` : ``} "${command}"`;
+      });
 
       let libl = args.libraryList.slice(0).reverse();
       libl = libl.map(lib => this.convertVariables(lib));
@@ -375,13 +390,13 @@ module.exports = class builder {
 
     command = `echo "` + command + `" | /QOpenSys/usr/bin/qsh`;
 
-    debug(command);
+    General.debug(command);
     try {
       const result = execSync(command);
 
       return result.toString().trim();
     } catch (e) {
-      error(e);
+      builder.error(e);
     }
   }
 
@@ -395,11 +410,11 @@ module.exports = class builder {
       try {
         execSync(command);
 
-        debug(`Created sourcefile objPath`);
+        General.log(`Created sourcefile objPath`);
         this.builtSourceFiles.push(objPath);
       } catch (e) {
-        debug(e);
-        debug(`Failed to create source file`);
+        General.debug(e);
+        General.debug(`Failed to create source file`);
       }
     }
   }
@@ -415,10 +430,10 @@ module.exports = class builder {
     try {
       execSync(command);
 
-      debug(`Copied ${ifsPath} to ${lib}/${file}/${member}`);
+      General.debug(`Copied ${ifsPath} to ${lib}/${file}/${member}`);
     } catch (e) {
-      debug(e);
-      error(`Failed to copy source file`);
+      General.debug(e);
+      General.error(`Failed to copy source file`);
     }
   }
   
@@ -437,7 +452,7 @@ module.exports = class builder {
     const potentialConfig = path.join(dir, `config.json`);
   
     if (this.deps[sourcePath]) {
-      debug(`${sourcePath} already resolved.`);
+      General.debug(`${sourcePath} already resolved.`);
       return;
     } else {
       this.deps[sourcePath] = [];
@@ -445,7 +460,7 @@ module.exports = class builder {
     
     // Try and fetch the config if we haven't already
     if (this.configs[potentialConfig] === undefined) 
-    this.configs[potentialConfig] = await getConfig(potentialConfig);
+    this.configs[potentialConfig] = await General.getConfig(potentialConfig);
   
     const currentConfig = this.configs[potentialConfig];
   
@@ -462,16 +477,16 @@ module.exports = class builder {
                 path = path.substr(2);
   
               if (sourcePath === path) {
-                error(`Circular dependency detected: ${sourcePath} requires itself`);
+                builder.error(`Circular dependency detected: ${sourcePath} requires itself`);
               } else {
                 this.deps[sourcePath].push(path);
                 await this.resolveDep(path);
               }
             } else {
               if (potentialPaths.length > 1) {
-                error(`Found ${dep} ${potentialPaths.length} times for ${sourcePath})`);
+                builder.error(`Found ${dep} ${potentialPaths.length} times for ${sourcePath})`);
               } else {
-                error(`Could not find ${dep} for ${sourcePath}`);
+                builder.error(`Could not find ${dep} for ${sourcePath}`);
               }
             }
           }
@@ -496,32 +511,4 @@ module.exports = class builder {
 
     return string;
   }
-
-  static error(string) {
-    console.warn(`\x1b[31m[ERROR]\x1b[0m ${string}`);
-    process.exit(1);
-  }
-}
-
-async function getConfig(jsonPath) {
-  try {
-    const config = await fs.readFile(jsonPath, `utf8`);
-    return JSON.parse(config);
-  } catch (e) {
-    return null;
-  }
-}
-
-function writeContent(path, content) {
-  return fs.writeFile(path, content, `utf8`);
-}
-
-function debug(string) {
-  if (process.env.DEBUG) {
-    console.log(`[DEBUG] ${string}`);
-  }
-}
-
-function log(string) {
-  console.log(`[LOG] ${string}`);
 }

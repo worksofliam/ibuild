@@ -8,7 +8,7 @@
       "requires": ["emps.dspf", "constants.rpgle"]
     },
     "depts.pgm": {
-      "requires": ["depts.sqlrpgle"]
+      "requires": ["depts.sqlrpgle", "cmpsys.bnddir"]
     }
   }
 }
