@@ -1,6 +1,15 @@
 {
+  "scripts": {
+		"prepublish": "webpack --mode production",
+		"webpack": "webpack --mode development",
+		"webpack-dev": "webpack --mode development --watch"
+	},
   "dependencies": {
     "glob": "^7.2.0",
     "jsonschema": "^1.4.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.56.0",
+    "webpack-cli": "^4.8.0"
   }
 }
