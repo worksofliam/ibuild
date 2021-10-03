@@ -9,7 +9,7 @@ const glob = require(`glob`);
 const validate = require('jsonschema').validate;
 
 const General = require(`./general`);
-const BindingDirectory = require(`./psudo/bindingDirectory`);
+const BindingDirectory = require(`./pseudo/bindingDirectory`);
 
 module.exports = class builder {
   /**
