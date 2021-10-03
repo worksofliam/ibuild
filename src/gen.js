@@ -18,6 +18,9 @@ module.exports = class init {
     // Validate config
 
     if (config) {
+      /** @type {{[file: string]: path.ParsedPath[]}} */
+      let deps = {};
+
       const buildValid = validate(config, schemas.project);
 
       if (buildValid.valid === false) {
@@ -34,6 +37,7 @@ module.exports = class init {
 
       for (const file of allFiles) {
         const fileInfo = path.parse(file);
+        /** @type {path.ParsedPath[]} */
         let possibleDeps = [];
         const fileContent = await (await fs.readFile(file, `utf8`)).toUpperCase();
 
@@ -51,15 +55,52 @@ module.exports = class init {
         }
 
         if (possibleDeps.length > 0) {
-          switch (options.style) {
-            case `none`:
-              General.log(`${path.join(fileInfo.dir, fileInfo.base)}: ${possibleDeps.map(dep => path.join(dep.dir, dep.base)).join(` `)}`);
-              break;
-            case `make`:
-              console.log(`${fileInfo.base}: ${possibleDeps.map(dep => dep.base).join(` `)}`);
-              break;
-          }
+          deps[file] = possibleDeps;
         }
+      }
+
+      const depsKeys = Object.keys(deps);
+
+      switch (options.style) {
+        case `none`:
+          depsKeys.forEach(file => {
+            General.log(`${file}: ${deps[file].map(dep => dep.base)}`);
+          });
+          break;
+
+        case `make`:
+          let makefile = [`# Potenial makefile. Check for dep circles.`];
+          depsKeys.forEach(file => {
+            makefile.push(`${path.basename(file)}: ${deps[file].map(dep => dep.base).join(` `)}`);
+          });
+          await General.writeContent(`makefile`, makefile.join(`\n`));
+          General.log(`Written to makefile.`);
+          break;
+
+        case `ibuild`:
+          let files = {};
+          depsKeys.forEach(file => {
+            const fileInfo = path.parse(file);
+
+            if (!files[fileInfo.dir]) {
+              files[fileInfo.dir] = {sources: {}};
+            }
+
+            if (!files[fileInfo.dir].sources[fileInfo.base]) {
+              files[fileInfo.dir].sources[fileInfo.base] = {requires: []};
+            }
+
+            files[fileInfo.dir].sources[fileInfo.base].requires = deps[file].map(dep => dep.base);
+          });
+
+          console.log(files);
+
+          const fileNames = Object.keys(files);
+          for (const file of fileNames) {
+            General.log(`Writing ${file}/config.json`);
+            await General.writeContent(path.join(file, `config.json`), JSON.stringify(files[file], null, 2)); 
+          }
+          break;
       }
     } else {
       General.error(`No project.json found. Use 'ibuild init' first.`);

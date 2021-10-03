@@ -29,7 +29,7 @@
         "DEBUG": "true"
       },
       "program": "./index.js",
-      "args": ["gen", "--style", "make"],
+      "args": ["gen", "--style", "ibuild"],
     }
   ]
 }
