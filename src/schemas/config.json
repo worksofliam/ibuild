@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "Folder configuration",
+  "description": "Configuration for this specific folder in the build.",
+  "required": [],
+  "properties": {
+    "headers": {
+      "$id": "#/properties/headers",
+      "type": "boolean",
+      "title": "Headers",
+      "description": "Determines if this folder contains only header files."
+    },
+    "sourceFileCCSID": {
+      "$id": "#/properties/sourceFileCCSID",
+      "type": "string",
+      "title": "Source file CCSID",
+      "description": "If any file in this folder has to be copied to a source file, the source file will be created with this CCSID."
+    },
+    "overrides": {
+      "$id": "#/properties/overrides",
+      "type": "object",
+      "title": "Build overrides",
+      "description": "Specific properties to override when building any source in this folder.",
+      "required": [],
+      "properties": {
+        "library": {
+          "$id": "#/properties/overrides/properties/library",
+          "type": "string",
+          "title": "Library",
+          "description": "The library to build sources in this folder into.",
+          "maxLength": 10
+        },
+        "currentLibrary": {
+          "$id": "#/properties/overrides/properties/currentLibrary",
+          "type": "string",
+          "title": "Current library",
+          "description": "The current library for sources in this folder. Useful with SQL sources.",
+          "maxLength": 10
+        },
+        "libraryList": {
+          "$id": "#/properties/overrides/properties/libraryList",
+          "type": "array",
+          "title": "Library list",
+          "description": "Library list for sources in this folder.",
+          "additionalItems": true,
+          "items": {
+            "$id": "#/properties/overrides/properties/libraryList/items",
+            "type": "string",
+            "title": "Library",
+            "maxLength": 10
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "sources": {
+      "$id": "#/properties/sources",
+      "type": "object",
+      "title": "The sources schema",
+      "description": "An explanation about the purpose of this instance.",
+      "required": [],
+      "patternProperties": {
+        "^.*$": {
+          "type": "object",
+          "title": "Source name",
+          "description": "The base name of the file in this folder.",
+          "required": [],
+          "properties": {
+            "requires": {
+              "$id": "#/properties/sources/properties/file/properties/requires",
+              "type": "array",
+              "title": "Requires (dependencies)",
+              "description": "A list of sources that this file depends on.",
+              "additionalItems": true,
+              "items": {
+                "$id": "#/properties/sources/properties/file/properties/requires/items",
+                "type": "string",
+                "title": "Name",
+                "description": "Specify a file just by name.ext, or folder/name.ext."
+              }
+            },
+            "execution": {
+              "$id": "#/properties/sources/properties/file/properties/execution",
+              "type": "string",
+              "title": "Execution",
+              "description": "If this source requires a custom command to be built, define it here. Can use variables."
+            },
+            "text": {
+              "$id": "#/properties/sources/properties/file/properties/text",
+              "type": "string",
+              "title": "Object text",
+              "description": "Text for the object being built. Refered to as &TEXT."
+            },
+            "header": {
+              "$id": "#/properties/sources/properties/file/properties/header",
+              "type": "boolean",
+              "title": "Header",
+              "description": "Used to tell the build if this source is a header or not. Headers do not get built/executed."
+            },
+            "currentLibrary": {
+              "$id": "#/properties/sources/properties/file/properties/currentLibrary",
+              "type": "string",
+              "title": "Current library",
+              "description": "If this source needs a specific current library, specify it here.",
+              "maxLength": 10
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -12,7 +12,8 @@
         "<node_internals>/**"
       ],
       "env": {
-        "DEBUG": "true"
+        "DEBUG": "true",
+        "BUILDLIB": "barry"
       },
       "program": "./index.js",
       "args": ["build", "--onlyprint"],

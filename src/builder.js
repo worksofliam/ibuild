@@ -1,9 +1,12 @@
 const fs = require(`fs/promises`);
 
+const schemas = require(`./schemas`);
+
 const { execSync } = require('child_process');
 
 const path = require(`path`);
 const glob = require(`glob`);
+const validate = require('jsonschema').validate;
 
 const General = require(`./general`);
 const BindingDirectory = require(`./psudo/bindingDirectory`);
@@ -51,6 +54,18 @@ module.exports = class builder {
     let validTypes = [];
     
     // Validate config
+
+    const buildValid = validate(this.config, schemas.project);
+
+    if (buildValid.valid === false) {
+      General.error(`Invalid project.json`, false);
+      buildValid.errors.forEach(error => {
+        General.error(`${error.property}: ${error.message}`, false);
+      });
+      General.error(`Exiting.`, true);
+    }
+
+    // Handle variables
 
     if (this.config.execution) {
       validTypes = Object.keys(this.config.execution);
@@ -459,8 +474,21 @@ module.exports = class builder {
     }
     
     // Try and fetch the config if we haven't already
-    if (this.configs[potentialConfig] === undefined) 
-    this.configs[potentialConfig] = await General.getConfig(potentialConfig);
+    if (this.configs[potentialConfig] === undefined) {
+      this.configs[potentialConfig] = await General.getConfig(potentialConfig);
+
+      // If it was found, check it's valid
+      if (this.configs[potentialConfig]) {
+        const configValid = validate(this.configs[potentialConfig], schemas.config);
+        if (configValid.valid === false) {
+          General.error(`Invalid ${potentialConfig}`, false);
+          configValid.errors.forEach(error => {
+            General.error(`${error.property}: ${error.message}`, false);
+          });
+          General.error(`Exiting.`, true);
+        }
+      }
+    }
   
     const currentConfig = this.configs[potentialConfig];
   

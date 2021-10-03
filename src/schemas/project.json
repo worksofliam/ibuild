@@ -1,0 +1,88 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "title": "The build configuration",
+    "description": "Configuration for the build of the application",
+    "required": [
+        "name",
+        "library",
+        "libraryList",
+        "execution"
+    ],
+    "properties": {
+        "name": {
+            "$id": "#/properties/name",
+            "type": "string",
+            "title": "Project name",
+            "default": ""
+        },
+        "envVars": {
+            "$id": "#/properties/envVars",
+            "type": "array",
+            "title": "Environment variables required",
+            "description": "A list of environment variables required for the build.",
+            "default": [
+                "BUILDLIB"
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/envVars/items",
+                "type": "string",
+                "title": "Uppercase environment variable"
+            }
+        },
+        "library": {
+            "$id": "#/properties/library",
+            "type": "string",
+            "title": "Build library",
+            "description": "The default build library for this project. Can use environment variables. Refered to as &LIBRARY.",
+            "default": "&BUILDLIB",
+            "maxLength": 10
+        },
+        "currentLibrary": {
+            "$id": "#/properties/currentLibrary",
+            "type": "string",
+            "title": "Current library",
+            "description": "The default current library for this project. Can use environment variables. Refered to as &CURRENTLIBRARY",
+            "default": "&BUILDLIB",
+            "maxLength": 10
+        },
+        "libraryList": {
+            "$id": "#/properties/libraryList",
+            "type": "array",
+            "title": "User library list",
+            "description": "The default library list for this project. Can use environment variables.",
+            "default": [],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/libraryList/items",
+                "type": "string",
+                "title": "Library",
+                "maxLength": 10
+            }
+        },
+        "ifsCCSID": {
+            "$id": "#/properties/ifsCCSID",
+            "type": "string",
+            "title": "CCSID for streamfiles before being built.",
+            "default": "1252"
+        },
+        "execution": {
+            "$id": "#/properties/execution",
+            "type": "object",
+            "title": "Commands to be executed for certain extensions",
+            "description": "Used to define how to buuld each extension. If your extension is not listed, the build will not include it.",
+            "patternProperties": {
+                "^.*$": {
+                    "anyOf": [
+                        {
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "additionalProperties": true
+}

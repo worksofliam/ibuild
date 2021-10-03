@@ -11,9 +11,11 @@ module.exports = class {
     }
   }
 
-  static error(string) {
+  static error(string, exit = true) {
     console.warn(`\x1b[31m[ERROR]\x1b[0m ${string}`);
-    process.exit(1);
+
+    if (exit)
+      process.exit(1);
   }
 
   static async getConfig(jsonPath) {

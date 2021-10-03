@@ -2,7 +2,9 @@
   "sources": {
     "depts.sqlrpgle": { 
       "requires": ["depts.dspf", "employees.sqlrpgle", "constants.rpgle"],
-      "execution": "CRTSQLRPGI OBJTYPE(*MODULE) OBJ(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') COMMIT(*NONE)"
+      "execution": "CRTSQLRPGI OBJTYPE(*MODULE) OBJ(&LIBRARY/&NAME) SRCSTMF('&SRCSTMF') COMMIT(*NONE)",
+      "text": "Hello world",
+      "header": false
     },
     "employees.sqlrpgle": {
       "requires": ["emps.dspf", "constants.rpgle"]
