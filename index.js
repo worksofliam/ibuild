@@ -5,8 +5,8 @@ const init = require('./src/init');
 const args = process.argv.slice(2);
 
 let action = args[0];
-let outdir = `output`;
-let considerNulls = true;
+
+let arguments;
 
 switch (action) {
   case `init`:
@@ -14,11 +14,26 @@ switch (action) {
     break;
 
   case `gen`:
-    gen.find();
+    arguments = {
+      style: `none`
+    };
+
+    for (let i = 1; i < args.length; i++) {
+      if (args[i].startsWith(`-`)) {
+        //Specific argument
+        switch (args[i]) {
+          case `--style`:
+            arguments.style = args[i + 1];
+            break;
+        }
+      }
+    }
+
+    gen.find(arguments);
     break;
 
   case `build`:
-    let arguments = {
+    arguments = {
       force: false,
       onlyPrint: false,
       spool: false,

@@ -8,10 +8,12 @@ const schemas = require(`./schemas`);
 const General = require(`./general`);
 
 module.exports = class init {
-  static async find() { 
+  /**
+   * 
+   * @param {{style: "none"|"make"|"ibuild"}} options 
+   */
+  static async find(options) { 
     const config = await General.getConfig(path.join(process.cwd(), `test`, `project.json`));
-
-    let validTypes = [];
     
     // Validate config
 
@@ -41,15 +43,23 @@ module.exports = class init {
             if (fileInfo.base !== detail.base) {
               if (path.join(fileInfo.dir, fileInfo.name) !== path.join(detail.dir, detail.name)) {
                 if (fileContent.includes(detail.name.toUpperCase())) {
-                  possibleDeps.push(path.join(detail.dir, detail.base));
+                  possibleDeps.push(detail);
                 }
               }
             }
-          }
+          } 
         }
 
-        if (possibleDeps.length > 0)
-          General.log(`${path.join(fileInfo.dir, fileInfo.base)}: ${possibleDeps.join(` `)}`);
+        if (possibleDeps.length > 0) {
+          switch (options.style) {
+            case `none`:
+              General.log(`${path.join(fileInfo.dir, fileInfo.base)}: ${possibleDeps.map(dep => path.join(dep.dir, dep.base)).join(` `)}`);
+              break;
+            case `make`:
+              console.log(`${fileInfo.base}: ${possibleDeps.map(dep => dep.base).join(` `)}`);
+              break;
+          }
+        }
       }
     } else {
       General.error(`No project.json found. Use 'ibuild init' first.`);
