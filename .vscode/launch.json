@@ -7,7 +7,7 @@
     {
       "type": "pwa-node",
       "request": "launch",
-      "name": "Launch Program",
+      "name": "Launch Build",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -17,6 +17,11 @@
       },
       "program": "./index.js",
       "args": ["build", "--onlyprint"],
+      "outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"preLaunchTask": "npm: webpack",
+			"sourceMaps": true
     },
     {
       "type": "pwa-node",
@@ -30,6 +35,11 @@
       },
       "program": "./index.js",
       "args": ["gen", "--style", "ibuild"],
+      "outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+			"preLaunchTask": "npm: webpack",
+			"sourceMaps": true
     }
   ]
 }
