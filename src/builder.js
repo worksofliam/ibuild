@@ -67,11 +67,7 @@ module.exports = class builder {
 
     // Handle variables
 
-    if (this.config.execution) {
-      validTypes = Object.keys(this.config.execution);
-    } else {
-      builder.error(`No execution object found in project.json`);
-    }
+    validTypes = Object.keys(this.config.execution);
 
     if (this.config.envVars && this.config.envVars.length > 0) {
       for (const envVar of this.config.envVars) {
