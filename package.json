@@ -1,9 +1,29 @@
 {
+  "name": "ibuild",
+  "description": "A modern take on an automated builder for IBM i.",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/worksofliam/ibuild.git"
+  },
+  "keywords": [
+    "cli"
+  ],
+  "author": "Works Of Barry",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/worksofliam/ibuild/issues"
+  },
+  "homepage": "https://github.com/worksofliam/ibuild#readme",
+  "bin":{
+    "ibuild": "./bin/ibuild"
+  },
   "scripts": {
-		"prepublish": "webpack --mode production",
-		"webpack": "webpack --mode development",
-		"webpack-dev": "webpack --mode development --watch"
-	},
+    "install": "webpack --mode production",
+    "webpack": "webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch"
+  },
   "dependencies": {
     "glob": "^7.2.0",
     "jsonschema": "^1.4.0"

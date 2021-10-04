@@ -24,6 +24,7 @@ switch (action) {
         switch (args[i]) {
           case `--style`:
             arguments.style = args[i + 1];
+            i += 1;
             break;
         }
       }
