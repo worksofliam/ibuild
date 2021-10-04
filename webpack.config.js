@@ -3,10 +3,14 @@
 'use strict';
 
 const path = require(`path`);
+const webpack = require(`webpack`);
 
 /**@type {import('webpack').Configuration}*/
 const config = {
   target: `node`, // vscode extensions run in a Node.js-context 📖 -> https://webpack.js.org/configuration/node/
+  plugins: [
+    new webpack.BannerPlugin({ banner: "#!/usr/bin/env node", raw: true })
+  ],
 
   entry: `./index.js`, // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
   output: {
@@ -24,6 +28,6 @@ const config = {
   },
   module: {
     rules: []
-  }
+  },
 };
 module.exports = config;

@@ -49,7 +49,7 @@ module.exports = class builder {
    * @param {string[]} files List of files to build. If empty, build all
    */
   async run(files) {
-    this.config = await General.getConfig(path.join(process.cwd(), `test`, `project.json`));
+    this.config = await General.getConfig(path.join(process.cwd(), `project.json`));
 
     let validTypes = [];
     
@@ -139,7 +139,7 @@ module.exports = class builder {
   }
 
   async startBuild() {
-    const buildDataPath = path.join(process.cwd(), `test`, `build.json`);
+    const buildDataPath = path.join(process.cwd(), `build.json`);
 
     if (this.options.force === false) {
       const prevBuild = await General.getConfig(buildDataPath);

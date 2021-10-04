@@ -13,7 +13,7 @@ module.exports = class init {
    * @param {{style: "none"|"make"|"ibuild"}} options 
    */
   static async find(options) { 
-    const config = await General.getConfig(path.join(process.cwd(), `test`, `project.json`));
+    const config = await General.getConfig(path.join(process.cwd(), `project.json`));
     
     // Validate config
 

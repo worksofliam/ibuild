@@ -16,8 +16,8 @@
     "url": "https://github.com/worksofliam/ibuild/issues"
   },
   "homepage": "https://github.com/worksofliam/ibuild#readme",
-  "bin":{
-    "ibuild": "./bin/ibuild"
+  "bin": {
+    "ibuild": "./bin/ibuild.js"
   },
   "scripts": {
     "install": "webpack --mode production",
