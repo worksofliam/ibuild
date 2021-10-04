@@ -97,14 +97,18 @@ module.exports = class builder {
 
     // Start working
 
-    const allFiles = glob.sync(path.join(`.`, `**`, `*.+(${validTypes.join(`|`)})`));
+    const allFiles = glob.sync(path.join(`.`, `**`, `*.+(${validTypes.join(`|`)})`), {
+      nocase: true,
+    });
     let startSources = [];
 
     let cleanup = false;
 
     if (files.length > 0) {
       for (const source of files) {
-        startSources.push(...glob.sync(`./**/${source}`));
+        startSources.push(...glob.sync(`./**/${source}`, {
+          nocase: true,
+        }));
       }
     } else {
       startSources = allFiles;
@@ -493,7 +497,9 @@ module.exports = class builder {
         const currentDep = currentConfig.sources[info.base];
         if (currentDep.requires && currentDep.requires.length > 0) {
           for (const dep of currentDep.requires) {
-            const potentialPaths = glob.sync(`./**/${dep}`);
+            const potentialPaths = glob.sync(`./**/${dep}`, {
+              nocase: true,
+            });
       
             if (potentialPaths.length === 1) {
               let path = potentialPaths[0];

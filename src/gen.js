@@ -32,8 +32,13 @@ module.exports = class init {
       }
 
       const validTypes = Object.keys(config.execution);
-      const allFiles = glob.sync(path.join(`.`, `**`, `*.+(${validTypes.join(`|`)})`));
+      const allFiles = glob.sync(path.join(`.`, `**`, `*.+(${validTypes.join(`|`)})`), {
+        nocase: true,
+      });
       const detailNames = allFiles.map(file => path.parse(file));
+
+      General.debug(`Valid types: ${validTypes.join(`, `)}`);
+      General.debug(`Found ${detailNames.length} files.`);
 
       for (const file of allFiles) {
         const fileInfo = path.parse(file);
@@ -64,7 +69,7 @@ module.exports = class init {
       switch (options.style) {
         case `none`:
           depsKeys.forEach(file => {
-            General.log(`${file}: ${deps[file].map(dep => dep.base)}`);
+            General.log(`${file}: ${deps[file].map(dep => dep.base).join(`, `)}`);
           });
           break;
 
@@ -87,10 +92,16 @@ module.exports = class init {
             }
 
             if (!files[fileInfo.dir].sources[fileInfo.base]) {
-              files[fileInfo.dir].sources[fileInfo.base] = {requires: []};
+              files[fileInfo.dir].sources[fileInfo.base] = {
+                requires: []
+              };
             }
 
             files[fileInfo.dir].sources[fileInfo.base].requires = deps[file].map(dep => dep.base);
+
+            if (config.execution[fileInfo.ext.toLowerCase()] === `#HEADERS`) {
+              files[fileInfo.dir].sources[fileInfo.base].headers = true;
+            }
           });
 
           console.log(files);
